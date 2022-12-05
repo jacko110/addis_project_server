@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  employeeserver:
+    image: employeeserver
+    restart: always
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: development
+      MONGO_URI: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb
+    ports:
+      - 8000:8000
+    container_name: employee-server
+    volumes:
+      - .:/usr/src/api
+      - /usr/src/api/node_modules
+    links:
+      - mongodb
+    networks:
+      - employee-api
+  mongodb:
+    image: mongo:latest
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - data:/data/db
+    environment:
+      DB_USERNAME: ${MONGO_USERNAME}
+      DB_PASSWORD: ${MONGO_PASSWORD}
+    networks:
+      - employee-api
+  mongo-express:
+    image: mongo-express
+    links:
+      - mongodb
+    ports:
+      - 8081:8081
+    environment:
+      MONGODB_ADMINUSERNAME: ${MONGO_USERNAME}
+      MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
+      MONGODB_SERVER: mongodb
+      AUTH_USERNAME: admin
+      AUTH_PASSWORD: admin1234
+    volumes:
+      - data
+    networks:
+      - employee-api
+networks:
+  employee-api:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local
